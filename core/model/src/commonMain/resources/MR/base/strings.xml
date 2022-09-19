@@ -36,6 +36,7 @@
     <string name="session_movie">MOVIE</string>
     <string name="session_slide">スライド</string>
     <string name="session_language_interpretation">(同時通訳)</string>
+    <string name="session_empty_message">この検索結果に一致する結果はありません</string>
 
     <!-- Setting -->
     <string name="setting_title">設定</string>
