@@ -3,9 +3,11 @@ package io.github.droidkaigi.confsched2022.feature.sessions
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,12 +44,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import dev.icerock.moko.resources.compose.stringResource
 import io.github.droidkaigi.confsched2022.designsystem.components.KaigiScaffold
 import io.github.droidkaigi.confsched2022.model.DroidKaigi2022Day
 import io.github.droidkaigi.confsched2022.model.DroidKaigiSchedule
 import io.github.droidkaigi.confsched2022.model.Filters
 import io.github.droidkaigi.confsched2022.model.TimetableItemId
 import io.github.droidkaigi.confsched2022.model.fake
+import io.github.droidkaigi.confsched2022.strings.Strings
 import io.github.droidkaigi.confsched2022.ui.UiLoadState.Error
 import io.github.droidkaigi.confsched2022.ui.UiLoadState.Loading
 import io.github.droidkaigi.confsched2022.ui.UiLoadState.Success
@@ -168,62 +172,80 @@ private fun SearchedItemListField(
     onBookMarkClick: (sessionId: TimetableItemId, currentIsFavorite: Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(modifier = modifier) {
-        schedule.dayToTimetable.forEach { (dayToTimeTable, timeTable) ->
-            val sessions =
-                timeTable.filtered(Filters(filterSession = true, searchWord = searchWord)).contents
-            if (sessions.isEmpty()) {
-                return@forEach
-            }
-            stickyHeader {
-                SearchedHeader(day = dayToTimeTable)
-            }
-            items(sessions) { timetableItemWithFavorite ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onItemClick(timetableItemWithFavorite.timetableItem.id) }
-                        .padding(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth()
+    val filteredDayToSessions = schedule.dayToTimetable.mapValues {
+        it.value.filtered(
+            Filters(filterSession = true, searchWord = searchWord)
+        ).contents
+    }.filterValues {
+        it.isNotEmpty()
+    }
+    if (filteredDayToSessions.isEmpty()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                modifier = Modifier.size(50.dp),
+                painter = painterResource(id = R.drawable.ic_search),
+                contentDescription = null
+            )
+            Spacer(modifier = Modifier.size(10.dp))
+            Text(text = stringResource(Strings.session_empty_message))
+        }
+    } else {
+        LazyColumn(modifier = modifier) {
+            filteredDayToSessions.forEach { (dayToTimeTable, sessions) ->
+                stickyHeader {
+                    SearchedHeader(day = dayToTimeTable)
+                }
+                items(sessions) { timetableItemWithFavorite ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onItemClick(timetableItemWithFavorite.timetableItem.id) }
+                            .padding(12.dp)
                     ) {
-                        Box(
-                            modifier = Modifier.width(85.dp),
+                        Row(
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
+                            Box(
+                                modifier = Modifier.width(85.dp),
                             ) {
-                                val startLocalDateTime =
-                                    timetableItemWithFavorite.timetableItem.startsAt
-                                        .toLocalDateTime(TimeZone.of("UTC+9"))
-                                val endLocalDateTime =
-                                    timetableItemWithFavorite.timetableItem.endsAt
-                                        .toLocalDateTime(TimeZone.of("UTC+9"))
-                                val startTimeString = startLocalDateTime.time.toString()
-                                val endTimeString = endLocalDateTime.time.toString()
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    val startLocalDateTime =
+                                        timetableItemWithFavorite.timetableItem.startsAt
+                                            .toLocalDateTime(TimeZone.of("UTC+9"))
+                                    val endLocalDateTime =
+                                        timetableItemWithFavorite.timetableItem.endsAt
+                                            .toLocalDateTime(TimeZone.of("UTC+9"))
+                                    val startTimeString = startLocalDateTime.time.toString()
+                                    val endTimeString = endLocalDateTime.time.toString()
 
-                                Text(
-                                    text = startTimeString,
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .size(1.dp, 2.dp)
-                                        .background(MaterialTheme.colorScheme.onBackground)
-                                ) { }
-                                Text(
-                                    text = endTimeString,
-                                    style = MaterialTheme.typography.titleMedium
-                                )
+                                    Text(
+                                        text = startTimeString,
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(1.dp, 2.dp)
+                                            .background(MaterialTheme.colorScheme.onBackground)
+                                    ) { }
+                                    Text(
+                                        text = endTimeString,
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                }
                             }
+                            SessionListItem(
+                                timetableItem = timetableItemWithFavorite.timetableItem,
+                                isFavorited = timetableItemWithFavorite.isFavorited,
+                                onFavoriteClick = onBookMarkClick,
+                                searchWord = searchWord,
+                            )
                         }
-                        SessionListItem(
-                            timetableItem = timetableItemWithFavorite.timetableItem,
-                            isFavorited = timetableItemWithFavorite.isFavorited,
-                            onFavoriteClick = onBookMarkClick,
-                            searchWord = searchWord,
-                        )
                     }
                 }
             }

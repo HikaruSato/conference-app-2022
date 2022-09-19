@@ -36,6 +36,7 @@
     <string name="session_movie">MOVIE</string>
     <string name="session_slide">SLIDE</string>
     <string name="session_language_interpretation">(interpretation)</string>
+    <string name="session_empty_message">There are no results matching this search</string>
 
     <!-- Setting -->
     <string name="setting_title">Setting</string>
